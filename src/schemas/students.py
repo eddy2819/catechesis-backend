@@ -12,6 +12,7 @@ class StudentBase(BaseModel):
     allergies: Optional[str] = None
     medical_conditions: Optional[str] = None
     status: Literal["active", "inactive"] = "active"
+    photo_url: Optional[str] = None
     sacrament: Optional[SacramentCreate] = None
 
 

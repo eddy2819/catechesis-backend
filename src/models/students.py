@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Date, Enum
+from sqlalchemy import Column, String, Date, Enum, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from src.db.database import Base
@@ -20,6 +20,7 @@ class Student(Base):
     allergies = Column(String(200), nullable=True)
     medical_conditions = Column(String(200), nullable=True)
     status = Column(Enum(StudentStatus), default=StudentStatus.active, nullable=False)
+    photo_url = Column(Text, nullable=True)
 
     parents = relationship("Parent", secondary="parent_student", back_populates="students")
     # Relations: back_populates names must match the attribute name on the other model

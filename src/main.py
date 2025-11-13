@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from src.routers import students , users
 from src.routers.auth import auth
@@ -7,7 +8,24 @@ from src.routers.auth import auth
 
 app = FastAPI(title="Sistema de registro de catequesisis",
               description="API para gestionar el registro de catequesis",
-               version="1.0.0")
+               version="1.0.0",
+               terms_of_service= "https://catequesis.org/terms/",
+               contact={
+        "name": "Equipo Catequesis Digital",
+        "url": "https://catequesis.org",
+        "email": "soporte@catequesis.org",
+    },
+    license_info={
+        "name": "MIT License",
+        "url": "https://opensource.org/licenses/MIT",
+    },
+    swagger_ui_parameters={
+        "defaultModelsExpandDepth": -1,  # Oculta modelos al inicio
+        "docExpansion": "none",          # Contrae rutas por defecto
+        "displayRequestDuration": True,  # Muestra tiempo de respuesta
+        "filter": True,                  # Activa barra de búsqueda
+        "syntaxHighlight.theme": "monokai",  # Tema oscuro
+    },)
 
 
 origins = [
@@ -28,6 +46,11 @@ app.include_router(auth.routerAuth)
 app.include_router(students.routerStudents)
 app.include_router(users.routerUsers)
 
+# Static files
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
 @app.get("/")
 def read_root():
   return {"message": "Bienvenido al sistema de registro de catequesis"}
+
+
