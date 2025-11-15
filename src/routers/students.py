@@ -88,7 +88,7 @@ def upload_photo(file: UploadFile = File(...)):
     # Devuelve la URL pública
     # Asegúrate que tu FastAPI esté sirviendo la carpeta /uploads/
     photo_url = f"/uploads/students/{filename}" 
-    return {"photoUrl": photo_url}
+    return {"photo_url": photo_url}
 
 @routerStudents.get("/",response_model=List[Student])
 def list_students(db: Session = Depends(get_db)):
