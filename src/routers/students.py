@@ -28,6 +28,14 @@ def get_db():
 UPLOAD_DIR = "uploads/students/"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+BASE_URL = "http://localhost:8000"
+
+def build_full_url(student_model: StudentModel):
+    """Construye la URL completa para photo_url si no la tiene."""
+    if student_model.photo_url and not student_model.photo_url.startswith("http"):
+        student_model.photo_url = f"{BASE_URL}{student_model.photo_url}"
+    return student_model
+
 # routes
 @routerStudents.post("/", response_model=Student)
 def create_student(student:StudentCreate, db:Session = Depends(get_db)):
@@ -37,7 +45,7 @@ def create_student(student:StudentCreate, db:Session = Depends(get_db)):
         file_path = os.path.join(UPLOAD_DIR, filename)
         with open(file_path, "wb") as f:
             f.write(student.photo_url.file.read())
-        photo_url = f"/uploads/students/{filename}"
+        photo_url = f"{BASE_URL}/uploads/students/{filename}"
 
     db_student = StudentModel(
         first_name=student.first_name,
@@ -92,11 +100,13 @@ def upload_photo(file: UploadFile = File(...)):
 
 @routerStudents.get("/",response_model=List[Student])
 def list_students(db: Session = Depends(get_db)):
-    students =(
+    students_query =(
         db.query(StudentModel)
         .options(joinedload(StudentModel.sacrament))
     )
-    return students.all()
+    students = students_query.all()
+    processed_students = [build_full_url(student) for student in students]
+    return processed_students
 
 @routerStudents.get("/{student_id}", response_model=Student)
 def get_student(student_id: UUID, db: Session = Depends(get_db)):
@@ -108,6 +118,7 @@ def get_student(student_id: UUID, db: Session = Depends(get_db)):
     )
     if not Student:
         raise HTTPException(status_code=404, detail="Student not found")
+    Student = build_full_url(Student)
     return Student
 
 @routerStudents.put("/{student_id}", response_model=Student)
