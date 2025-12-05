@@ -4,12 +4,15 @@ from typing import List
 from uuid import UUID
 import os, shutil
 import uuid
+from datetime import date
 
 from src.db.database import SessionLocal
 from src.models.students import Student as StudentModel
 from src.schemas.students import Student, StudentCreate, StudentUpdate
 from src.routers.depens import get_current_user
 from src.models.sacraments import Sacrament as SacramentModel
+from src.models.students_attendance import StudentAttendance
+from src.schemas.students_attendance import AttendanceCreate, AttendanceUpdate, AttendanceResponse
 
 
 routerStudents = APIRouter(
@@ -161,3 +164,39 @@ def delete_student(student_id: UUID, db: Session = Depends(get_db)):
     db.delete(student)
     db.commit()
     return
+
+
+
+@routerStudents.post("/attendance", response_model=AttendanceResponse, status_code=201)
+def mark_attendance(student_id: UUID, attendance: AttendanceCreate, db: Session = Depends(get_db)):
+    record = StudentAttendance(
+        student_id=student_id,
+        date=attendance.date,
+        status=attendance.status,
+        notes=attendance.notes
+    )
+    db.add(record)
+    db.commit()
+    db.refresh(record)
+    return record
+
+@routerStudents.get("/attendance/by-date/{selected_date}", response_model=List[AttendanceResponse], status_code=200)
+def list_attendance_by_date(selected_date: date, db: Session = Depends(get_db)):
+    records = db.query(StudentAttendance).filter(StudentAttendance.date == selected_date).all()
+    return records
+
+
+@routerStudents.put("/attendance/{attendance_id}", response_model=AttendanceResponse, status_code=200)
+def update_attendance(attendance_id: UUID, updates: AttendanceUpdate, db: Session = Depends(get_db)):
+    record = db.query(StudentAttendance).filter(StudentAttendance.id == attendance_id).first()
+    if not record:
+        raise HTTPException(status_code=404, detail="Attendance record not found")
+    
+    if updates.status is not None:
+        record.status = updates.status
+    if updates.notes is not None:
+        record.notes = updates.notes
+
+    db.commit()
+    db.refresh(record)
+    return record

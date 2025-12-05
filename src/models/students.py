@@ -26,5 +26,6 @@ class Student(Base):
     # Relations: back_populates names must match the attribute name on the other model
     notes = relationship("Note", back_populates="student")
     sacrament = relationship("Sacrament", uselist=False, back_populates="student", cascade="all, delete")
+    attendance_records = relationship("StudentAttendance", back_populates="student", cascade="all, delete")
 
 

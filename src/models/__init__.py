@@ -5,3 +5,4 @@ from src.models.sacraments import Sacrament
 from src.models.notes import Note, NoteCategory
 from src.models.catechist import Catechist
 from src.models.catechist_attendance import CatechistAttendance
+from src.models.students_attendance import StudentAttendance

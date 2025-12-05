@@ -22,3 +22,4 @@ class AttendanceStatus(str, Enum):
     ausente = "ausente"
     justificado = "justificado"
     tarde = "tarde"
+
