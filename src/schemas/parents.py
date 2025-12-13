@@ -7,7 +7,7 @@ class ParentBase(BaseModel):
     last_name: str
     email: EmailStr
     phone: str
-    relationship: str
+    relationship_type: str
     address: Optional[str]
     occupation: Optional[str]
 

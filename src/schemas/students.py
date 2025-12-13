@@ -1,8 +1,14 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional, Literal
+from typing import Optional, Literal, List
 from datetime import date
 from uuid import UUID
 from .sacraments import Sacrament, SacramentCreate
+
+class Parent(BaseModel):
+    first_name: str
+    last_name: str
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
 
 class StudentBase(BaseModel):
     first_name: str
@@ -14,6 +20,7 @@ class StudentBase(BaseModel):
     status: Literal["active", "inactive"] = "active"
     photo_url: Optional[str] = None
     sacrament: Optional[SacramentCreate] = None
+    parents : List[Parent] = []
 
 
 class StudentCreate(StudentBase):

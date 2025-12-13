@@ -77,6 +77,7 @@ def create_student(student:StudentCreate, db:Session = Depends(get_db)):
         # refresh student to load the newly created sacrament relationship
         db.refresh(db_student)
 
+
     return db_student
 
 @routerStudents.post("/upload-photo", status_code=200)
@@ -103,11 +104,14 @@ def upload_photo(file: UploadFile = File(...)):
 
 @routerStudents.get("/",response_model=List[Student])
 def list_students(db: Session = Depends(get_db)):
-    students_query =(
+    students = (
         db.query(StudentModel)
-        .options(joinedload(StudentModel.sacrament))
+        .options(
+            joinedload(StudentModel.sacrament),
+            joinedload(StudentModel.parents)
+        )
+        .all()
     )
-    students = students_query.all()
     processed_students = [build_full_url(student) for student in students]
     return processed_students
 
@@ -116,6 +120,7 @@ def get_student(student_id: UUID, db: Session = Depends(get_db)):
     Student = (
         db.query(StudentModel)
         .options(joinedload(StudentModel.sacrament))
+        .options(joinedload(StudentModel.parents))
         .filter(StudentModel.id == student_id)
         .first()
     )

@@ -24,3 +24,7 @@ class Parent(Base):
     occupation = Column(String(100), nullable=True)
 
     students = relationship("Student", secondary="parent_student", back_populates="parents")
+
+    @property
+    def student_ids(self):
+        return [student.id for student in self.students] 
