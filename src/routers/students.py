@@ -57,6 +57,7 @@ def create_student(student:StudentCreate, db:Session = Depends(get_db)):
         grade=student.grade,
         allergies=student.allergies,
         medical_conditions=student.medical_conditions,
+        address=student.address,
         photo_url=photo_url
     )
     db.add(db_student)
