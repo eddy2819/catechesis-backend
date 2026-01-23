@@ -20,6 +20,7 @@ class Student(Base):
     allergies = Column(String(200), nullable=True)
     medical_conditions = Column(String(200), nullable=True)
     status = Column(Enum(StudentStatus), default=StudentStatus.active, nullable=False)
+    address = Column(String(250), nullable=True)
     photo_url = Column(Text, nullable=True)
 
     parents = relationship("Parent", secondary="parent_student", back_populates="students")

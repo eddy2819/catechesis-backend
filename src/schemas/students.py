@@ -19,6 +19,7 @@ class StudentBase(BaseModel):
     medical_conditions: Optional[str] = None
     status: Literal["active", "inactive"] = "active"
     photo_url: Optional[str] = None
+    address: Optional[str] = None
     sacrament: Optional[SacramentCreate] = None
     parents : List[Parent] = []
 
