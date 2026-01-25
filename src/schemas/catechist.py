@@ -7,7 +7,7 @@ from src.models.enums import CatechistRole, CatechistStatus, AttendanceStatus
 class CatechistBase(BaseModel):
     first_name: str
     last_name: str
-    ci:str
+    ci: Optional[str] = None
     date_of_birth: date
     email: EmailStr
     phone_number: Optional[str] = None
