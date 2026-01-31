@@ -42,7 +42,7 @@ def build_full_url(student_model: StudentModel):
 # routes
 @routerStudents.post("/", response_model=Student)
 def create_student(student:StudentCreate, db:Session = Depends(get_db)):
-    pthoto_url = None
+    photo_url = None
     if student.photo_url:
         filename = f"{uuid.uuid4()}_{student.photo_url.filename}"
         file_path = os.path.join(UPLOAD_DIR, filename)
