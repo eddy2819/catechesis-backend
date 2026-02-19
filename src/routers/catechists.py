@@ -22,6 +22,11 @@ def create_Catechist(catechist: CatechistCreate, db: Session = Depends(get_db)):
 def list_catechists(db: Session = Depends(get_db)):
     return db.query(CatechistModel).all()
 
+
+@routerCatechists.get("/attendance", response_model=list[CatechistAttendance], status_code=200)
+def list_all_attendance(db: Session = Depends(get_db)):
+    return db.query(CatechistAttendanceModel).all()
+
 @routerCatechists.get("/{catechist_id}", response_model=Catechist, status_code=200)
 def get_catechist(catechist_id: UUID, db: Session = Depends(get_db)):
     catechist = db.query(CatechistModel).filter(CatechistModel.id == catechist_id).first()
@@ -67,6 +72,4 @@ def list_attendance(catechist_id: UUID, db: Session = Depends(get_db)):
     return db.query(CatechistAttendanceModel).filter(CatechistAttendanceModel.catechist_id == catechist_id).all()
 
 
-@routerCatechists.get("/attendance", response_model=list[CatechistAttendance], status_code=200)
-def list_all_attendance(db: Session = Depends(get_db)):
-    return db.query(CatechistAttendanceModel).all()
+
