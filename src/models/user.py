@@ -1,8 +1,9 @@
 import uuid
 from sqlalchemy import Column, String, Boolean
+import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID
 from src.db.database import Base
-
+from src.models.enums import UserRole
 class User(Base):
     __tablename__ = "users"
 
@@ -11,4 +12,4 @@ class User(Base):
     email = Column(String(100), unique=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
     is_active = Column(Boolean, default=True)
-    role = Column(String(20), default="admin")  # admin, catequista, etc.
+    role = Column(sa.Enum(UserRole), nullable=False, default=UserRole.admin)

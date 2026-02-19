@@ -5,9 +5,11 @@ from datetime import datetime, timedelta
 from src.core.config import settings
 from sqlalchemy.orm import Session
 from src.db.database import get_db
+from typing import List
 from src.models.user import User
 import uuid
 from src.core.security import SECRET_KEY, ALGORITHM
+from src.models.enums import UserRole
 
 
 
@@ -42,5 +44,22 @@ def get_current_user(
     if not user:
         raise credentials_exception
 
-    return user  # devuelve instancia ORM User
+    return user  # devuelve instancia ORM User 
+
+def require_roles(allowed_roles: List[UserRole]):
+    def role_checker(current_user: User = Depends(get_current_user)):
+        if not current_user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Inactive user",
+                headers={"WWW-Authenticate": "Bearer"}, 
+            )
+        if current_user.role not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions",
+                headers={"WWW-Authenticate": "Bearer"}, 
+            )
+        return current_user 
+    return role_checker        
 
