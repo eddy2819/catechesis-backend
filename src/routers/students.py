@@ -12,6 +12,7 @@ from src.schemas.students import Student, StudentCreate, StudentUpdate
 from src.routers.depens import get_current_user
 from src.models.sacraments import Sacrament as SacramentModel
 from src.models.students_attendance import StudentAttendance
+from src.models.parents import Parent as ParentModel
 from src.schemas.students_attendance import AttendanceCreate, AttendanceUpdate, AttendanceResponse
 
 
@@ -140,7 +141,11 @@ def update_student(student_id: UUID, student_update: StudentUpdate, db: Session 
         raise HTTPException(status_code=404, detail="Student not found")
     
     update_data = student_update.dict(exclude_unset=True)
+
     sacrament_data = update_data.pop("sacrament", None)
+    parent_ids = update_data.pop("parent_ids", None)
+    update_data.pop("parents", None)
+
 
     # Actualiza campos simples (incluyendo 'photo_url' si vino como string)
     for key, value in update_data.items():
@@ -157,6 +162,20 @@ def update_student(student_id: UUID, student_update: StudentUpdate, db: Session 
             new_sacrament = SacramentModel(**sacrament_data, student_id=student.id)
             db.add(new_sacrament)
     # --- FIN DE LA CORRECCIÓN --- (Tu 'else' anterior estaba mal y causaría un crash)
+
+    if parent_ids is not None:
+        # Limpia los padres actuales
+        student.parents.clear()
+        
+        # Crea o actualiza los padres enviados
+        for p_id in parent_ids:
+            # Busca si el padre ya existe por email (o crea uno nuevo)
+            parent = db.query(ParentModel).filter(ParentModel.id == p_id).first()
+            if not parent:
+                raise HTTPException(status_code=404, detail="Parent not found")
+            
+            # Asocia el padre con el estudiante
+            student.parents.append(parent)
 
     db.commit()
     db.refresh(student)

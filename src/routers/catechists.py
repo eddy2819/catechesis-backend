@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from uuid import UUID
+from datetime import date
 
 from src.db.database import get_db
 from src.models.catechist import Catechist as CatechistModel
@@ -26,6 +27,10 @@ def list_catechists(db: Session = Depends(get_db)):
 @routerCatechists.get("/attendance", response_model=list[CatechistAttendance], status_code=200)
 def list_all_attendance(db: Session = Depends(get_db)):
     return db.query(CatechistAttendanceModel).all()
+
+@routerCatechists.get("/attendance/by-date/{event_date}", response_model=list[CatechistAttendance], status_code=200)
+def list_attendance_by_date(event_date: date, db: Session = Depends(get_db)):
+    return db.query(CatechistAttendanceModel).filter(CatechistAttendanceModel.event_date == event_date).all()
 
 @routerCatechists.get("/{catechist_id}", response_model=Catechist, status_code=200)
 def get_catechist(catechist_id: UUID, db: Session = Depends(get_db)):

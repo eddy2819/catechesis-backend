@@ -29,6 +29,7 @@ class StudentCreate(StudentBase):
 
 class StudentUpdate(StudentBase):
     sacrament: Optional[SacramentCreate] = None
+    parent_ids: Optional[List[UUID]] = None
 
 class Student(StudentBase):
     id: UUID

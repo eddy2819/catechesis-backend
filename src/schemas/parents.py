@@ -3,6 +3,7 @@ from typing import Optional, List
 from uuid import UUID
 
 class ParentBase(BaseModel):
+    id: Optional[UUID] = None
     first_name: str
     last_name: str
     email: EmailStr
@@ -23,5 +24,5 @@ class Parent(ParentBase):
     student_ids: List[UUID] = []
 
     class Config:
-        orm_mode = True
+        from_attributes = True
         
