@@ -1,10 +1,13 @@
 import uuid
-from sqlalchemy import Column, String, Date, Enum
+from sqlalchemy import Column, String, Date, Enum, Table
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from src.db.database import Base 
 from src.models.enums import CatechistRole, CatechistStatus
+from sqlalchemy import ForeignKey
+
+
 
 
 class Catechist(Base):
@@ -30,4 +33,9 @@ class Catechist(Base):
         "CatechistAttendance",
         back_populates="catechist",
         cascade="all, delete-orphan")
+
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, unique=True)
+    user = relationship("User")  
+    
+    grups = relationship("GrupCatechist", back_populates="catechist", cascade="all, delete-orphan")
     

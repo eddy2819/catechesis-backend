@@ -6,3 +6,6 @@ from src.models.notes import Note, NoteCategory
 from src.models.catechist import Catechist
 from src.models.catechist_attendance import CatechistAttendance
 from src.models.students_attendance import StudentAttendance
+from src.models.grup_catechist import GrupCatechist
+from src.models.grup_catechistis import GrupCatechistis
+

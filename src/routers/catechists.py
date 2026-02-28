@@ -7,6 +7,11 @@ from src.db.database import get_db
 from src.models.catechist import Catechist as CatechistModel
 from src.models.catechist_attendance import CatechistAttendance as CatechistAttendanceModel
 from src.schemas.catechist import Catechist, CatechistCreate, CatechistUpdate, CatechistAttendance, CatechistAttendanceCreate, CatechistAttendanceUpdate
+from src.models.students import Student as StudentModel
+from src.schemas.students import Student as StudentSchema
+from src.routers.depens import require_roles, get_current_user
+from src.models.enums import UserRole
+from src.models.user import User as UserModel 
 
 routerCatechists = APIRouter(prefix="/catechists", tags=["Catechists"], )
 
@@ -19,10 +24,37 @@ def create_Catechist(catechist: CatechistCreate, db: Session = Depends(get_db)):
     db.refresh(db_catechist)
     return db_catechist
 
+@routerCatechists.post("/{catechist_id}/assign-students", response_model=Catechist)
+def assign_students_to_catechist(
+    catechist_id: UUID,
+    student_ids: list[UUID],
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(require_roles([UserRole.admin]))
+):
+    catechist = db.query(CatechistModel).filter(CatechistModel.id == catechist_id).first()
+    if not catechist:
+        raise HTTPException(status_code=404, detail="Catechist not found")
+    for student_id in student_ids:
+        student = db.query(StudentModel).filter(StudentModel.id == student_id).first()
+        if not student:
+            raise HTTPException(status_code=404, detail="Student not found")
+        catechist.students.append(student)
+    db.commit()
+    return catechist
+
 @routerCatechists.get("/", response_model=list[Catechist], status_code=200)
 def list_catechists(db: Session = Depends(get_db)):
     return db.query(CatechistModel).all()
 
+
+@routerCatechists.get("/my-students", response_model=list[StudentSchema], status_code=200)
+def get_my_students(db: Session = Depends(get_db), current_user: UserModel = Depends(require_roles([UserRole.admin, UserRole.catequista]))):
+    catechist = db.query(CatechistModel).filter(CatechistModel.user_id == current_user.id).first()
+    if not catechist:
+        raise HTTPException(status_code=404, detail="Tú usuario no está vinculado a un Catequista")
+    
+    grup_ids = [gc.grup_id for gc in catechist.grups]
+    return db.query(StudentModel).filter(StudentModel.grup_id.in_(grup_ids)).all()
 
 @routerCatechists.get("/attendance", response_model=list[CatechistAttendance], status_code=200)
 def list_all_attendance(db: Session = Depends(get_db)):
@@ -78,3 +110,15 @@ def list_attendance(catechist_id: UUID, db: Session = Depends(get_db)):
 
 
 
+@routerCatechists.patch("/{catechist_id}/link-user", response_model=Catechist, status_code=200)
+def link_user(catechist_id: UUID, user_id: UUID, db: Session = Depends(get_db)):
+    catechist = db.query(CatechistModel).filter(CatechistModel.id == catechist_id).first()
+    if not catechist:
+        raise HTTPException(status_code=404, detail="Catechist not found")
+    user = db.query(UserModel).filter(UserModel.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    catechist.user = user
+    db.commit()
+    db.refresh(catechist)
+    return catechist

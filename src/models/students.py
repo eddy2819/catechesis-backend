@@ -4,6 +4,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from src.db.database import Base
 import enum
+from sqlalchemy import ForeignKey
 
 class StudentStatus(str, enum.Enum):
     active = "active"
@@ -23,10 +24,15 @@ class Student(Base):
     address = Column(String(250), nullable=True)
     photo_url = Column(Text, nullable=True)
 
+    
+
     parents = relationship("Parent", secondary="parent_student", back_populates="students")
     # Relations: back_populates names must match the attribute name on the other model
     notes = relationship("Note", back_populates="student")
     sacrament = relationship("Sacrament", uselist=False, back_populates="student", cascade="all, delete")
     attendance_records = relationship("StudentAttendance", back_populates="student", cascade="all, delete")
+
+    grup_id = Column(UUID(as_uuid=True), ForeignKey("grup_catechistis.id"), nullable=False)
+    grup = relationship("GrupCatechistis", back_populates="students")
 
 

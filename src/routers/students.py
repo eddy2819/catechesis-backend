@@ -9,11 +9,13 @@ from datetime import date
 from src.db.database import SessionLocal
 from src.models.students import Student as StudentModel
 from src.schemas.students import Student, StudentCreate, StudentUpdate
-from src.routers.depens import get_current_user
+from src.routers.depens import get_current_user, require_roles
 from src.models.sacraments import Sacrament as SacramentModel
 from src.models.students_attendance import StudentAttendance
 from src.models.parents import Parent as ParentModel
 from src.schemas.students_attendance import AttendanceCreate, AttendanceUpdate, AttendanceResponse
+from src.models.enums import UserRole
+from src.models.user import User
 
 
 routerStudents = APIRouter(
@@ -225,3 +227,14 @@ def update_attendance(attendance_id: UUID, updates: AttendanceUpdate, db: Sessio
     db.commit()
     db.refresh(record)
     return record
+
+
+@routerStudents.patch("/{student_id}/assign-catechist", response_model=Student)    
+def assign_catechist(student_id: UUID, catechist_id: UUID, db: Session = Depends(get_db), current_user: User = Depends(require_roles([UserRole.admin])) ):
+    student = db.query(StudentModel).filter(StudentModel.id == student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    student.catechist_id = catechist_id
+    db.commit()
+    db.refresh(student)
+    return student    
