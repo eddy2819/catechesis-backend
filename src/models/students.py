@@ -34,5 +34,6 @@ class Student(Base):
 
     grup_id = Column(UUID(as_uuid=True), ForeignKey("grup_catechistis.id"), nullable=False)
     grup = relationship("GrupCatechistis", back_populates="students")
+    #grades = relationship("Grade", back_populates="student", cascade="all, delete")
 
 

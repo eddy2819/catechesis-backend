@@ -16,6 +16,8 @@ from src.models.parents import Parent as ParentModel
 from src.schemas.students_attendance import AttendanceCreate, AttendanceUpdate, AttendanceResponse
 from src.models.enums import UserRole
 from src.models.user import User
+from src.models.catechist import Catechist
+from src.models.grup_catechist import GrupCatechist
 
 
 routerStudents = APIRouter(
@@ -106,19 +108,52 @@ def upload_photo(file: UploadFile = File(...)):
     photo_url = f"/uploads/students/{filename}" 
     return {"photo_url": photo_url}
 
-@routerStudents.get("/",response_model=List[Student])
-def list_students(db: Session = Depends(get_db)):
-    students = (
+@routerStudents.get("/", response_model=List[Student])
+def list_students(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    query = (
         db.query(StudentModel)
         .options(
             joinedload(StudentModel.sacrament),
             joinedload(StudentModel.parents)
         )
-        .all()
     )
-    processed_students = [build_full_url(student) for student in students]
-    return processed_students
 
+    # 🔐 CONTROL POR ROLES
+    if current_user.role == UserRole.catequista:
+        catechist = db.query(Catechist).filter(
+            Catechist.user_id == current_user.id
+        ).first()
+
+        if not catechist:
+            raise HTTPException(status_code=403, detail="No tienes perfil de catequista asignado")
+
+        grup_ids = [
+            g[0] for g in db.query(GrupCatechist.grup_id)
+            .filter(GrupCatechist.catechist_id == catechist.id)
+            .all()
+        ]
+
+        if not grup_ids:
+            return []
+
+        query = query.filter(StudentModel.grup_id.in_(grup_ids))
+
+    elif current_user.role in [UserRole.admin, UserRole.parroco]:
+        # ✅ ven todos
+        pass
+
+    else:
+        # ❌ otros roles no ven nada
+        return []
+
+    students = query.all()
+    processed_students = [build_full_url(student) for student in students]
+
+    return processed_students
+    
 @routerStudents.get("/{student_id}", response_model=Student)
 def get_student(student_id: UUID, db: Session = Depends(get_db)):
     Student = (
@@ -132,6 +167,46 @@ def get_student(student_id: UUID, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Student not found")
     Student = build_full_url(Student)
     return Student
+
+@routerStudents.get("/by-group/{group_id}", response_model=List[Student])
+def get_students_by_group(
+    group_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    query = (
+        db.query(StudentModel)
+        .options(
+            joinedload(StudentModel.sacrament),
+            joinedload(StudentModel.parents)
+        )
+        .filter(StudentModel.grup_id == group_id)
+    )
+
+    # 🔐 Seguridad
+    if current_user.role == UserRole.catequista:
+        catechist = db.query(Catechist).filter(
+            Catechist.user_id == current_user.id
+        ).first()
+
+        if not catechist:
+             raise HTTPException(403, "No tienes perfil de catequista asignado")
+
+        grup_ids = [
+            g[0] for g in db.query(GrupCatechist.grup_id)
+            .filter(GrupCatechist.catechist_id == catechist.id)
+            .all()
+        ]
+
+        if group_id not in grup_ids:
+            raise HTTPException(403, "No tienes acceso a este grupo")
+
+    elif current_user.role not in [UserRole.admin, UserRole.parroco]:
+        raise HTTPException(403, "No autorizado")
+
+    students = query.all()
+    processed_students = [build_full_url(student) for student in students]
+    return processed_students
 
 @routerStudents.put("/{student_id}", response_model=Student)
 def update_student(student_id: UUID, student_update: StudentUpdate, db: Session = Depends(get_db)):
@@ -213,11 +288,21 @@ def list_attendance_by_date(selected_date: date, db: Session = Depends(get_db)):
     return records
 
 
-@routerStudents.put("/attendance/{attendance_id}", response_model=AttendanceResponse, status_code=200)
-def update_attendance(attendance_id: UUID, updates: AttendanceUpdate, db: Session = Depends(get_db)):
-    record = db.query(StudentAttendance).filter(StudentAttendance.id == attendance_id).first()
+@routerStudents.put("/{student_id}/attendance/{attendance_date}", response_model=AttendanceResponse, status_code=200)
+def update_attendance_by_student_and_date(
+    student_id: UUID, 
+    attendance_date: date, 
+    updates: AttendanceUpdate, 
+    db: Session = Depends(get_db)
+):
+    # Buscar el registro de asistencia específico para ese estudiante en esa fecha
+    record = db.query(StudentAttendance).filter(
+        StudentAttendance.student_id == student_id,
+        StudentAttendance.date == attendance_date
+    ).first()
+    
     if not record:
-        raise HTTPException(status_code=404, detail="Attendance record not found")
+        raise HTTPException(status_code=404, detail="Attendance record not found for this student and date")
     
     if updates.status is not None:
         record.status = updates.status
@@ -227,6 +312,7 @@ def update_attendance(attendance_id: UUID, updates: AttendanceUpdate, db: Sessio
     db.commit()
     db.refresh(record)
     return record
+
 
 
 @routerStudents.patch("/{student_id}/assign-catechist", response_model=Student)    
