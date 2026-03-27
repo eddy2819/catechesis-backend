@@ -31,6 +31,8 @@ app = FastAPI(title="Sistema de registro de catequesisis",
 origins = [
     "http://localhost:3000",
     "http://localhost:8000",
+    "https://catechesis-frontend.vercel.app",
+    "https://catechesis-frontend-git-main-eddys-projects.vercel.app"
 ]
 
 app.add_middleware(
