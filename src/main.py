@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from src.routers import students , users , catechists, parents, grups
+from src.routers import students , users , catechists, parents, grups, grades
 from src.routers.auth import auth
 
 
@@ -50,6 +50,7 @@ app.include_router(users.routerUsers)
 app.include_router(catechists.routerCatechists)
 app.include_router(parents.routerParents)
 app.include_router(grups.routerGrup)
+app.include_router(grades.routerGrades)
 
 # Static files
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")

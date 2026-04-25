@@ -19,3 +19,15 @@ class Evaluation(Base):
     catechist_id = Column(UUID(as_uuid=True), ForeignKey("catechists.id"), nullable=False)
 
     grades = relationship("Grade", back_populates="evaluation", cascade="all, delete")
+
+class Grade(Base):
+    __tablename__ = "grades"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    evaluation_id = Column(UUID(as_uuid=True), ForeignKey("evaluations.id"), nullable=False)
+    student_id = Column(UUID(as_uuid=True), ForeignKey("students.id"), nullable=False)
+    score = Column(Float, nullable=False)
+    comments = Column(String(250), nullable=True)
+
+    evaluation = relationship("Evaluation", back_populates="grades")
+    student = relationship("Student")
